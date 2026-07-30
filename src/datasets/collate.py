@@ -22,4 +22,9 @@ def collate_fn(dataset_items: list[dict]):
     )
     result_batch["labels"] = torch.tensor([elem["labels"] for elem in dataset_items])
 
+    if "utterance_id" in dataset_items[0]:
+        result_batch["utterance_id"] = [
+            item["utterance_id"] for item in dataset_items
+        ]
+
     return result_batch
