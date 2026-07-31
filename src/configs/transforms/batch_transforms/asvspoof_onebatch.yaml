@@ -1,0 +1,29 @@
+train:
+  data_object:
+    _target_: torch.nn.Sequential
+    _args_:
+      - _target_: src.transforms.PowerSpectrogram
+        n_fft: 512
+        win_length: 320
+        hop_length: 160
+
+      - _target_: src.transforms.FixLength1D
+        target_length: 100
+
+      - _target_: src.transforms.LogTransform
+        eps: 1e-10
+
+inference:
+  data_object:
+    _target_: torch.nn.Sequential
+    _args_:
+      - _target_: src.transforms.PowerSpectrogram
+        n_fft: 512
+        win_length: 320
+        hop_length: 160
+
+      - _target_: src.transforms.FixLength1D
+        target_length: 100
+
+      - _target_: src.transforms.LogTransform
+        eps: 1e-10
