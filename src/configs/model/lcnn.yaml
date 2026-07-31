@@ -1,0 +1,6 @@
+_target_: src.model.LCNN
+
+n_class: 2
+input_height: 257
+input_width: 750
+dropout: 0.75
