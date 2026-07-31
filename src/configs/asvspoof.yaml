@@ -1,0 +1,46 @@
+defaults:
+  - model: lcnn
+  - writer: wandb
+  - metrics: asvspoof
+  - datasets: asvspoof
+  - dataloader: asvspoof
+  - transforms: asvspoof
+  - _self_
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 3e-4
+
+lr_scheduler:
+  _target_: torch.optim.lr_scheduler.StepLR
+  step_size: 31720
+  gamma: 0.5
+
+loss_function:
+  _target_: src.loss.AntiSpoofingLoss
+
+trainer:
+  log_step: 50
+  n_epochs: 30
+  epoch_len: 3172
+
+  device_tensors:
+    - data_object
+    - labels
+
+  resume_from: null
+  device: auto
+  override: false
+
+  monitor: "min dev_EER"
+  save_period: 5
+  early_stop: 10
+
+  save_dir: saved
+  seed: 1
+
+writer:
+  project_name: voice-anti-spoofing-lcnn
+  run_name: lcnn-stft-baseline
+  mode: online
+  log_checkpoints: false
