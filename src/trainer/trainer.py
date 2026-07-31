@@ -1,3 +1,7 @@
+import torch
+from tqdm.auto import tqdm
+
+from src.metrics import compute_bonafide_scores, compute_eer
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
 
@@ -9,27 +13,14 @@ class Trainer(BaseTrainer):
 
     def process_batch(self, batch, metrics: MetricTracker):
         """
-        Run batch through the model, compute metrics, compute loss,
-        and do training step (during training stage).
-
-        The function expects that criterion aggregates all losses
-        (if there are many) into a single one defined in the 'loss' key.
-
-        Args:
-            batch (dict): dict-based batch containing the data from
-                the dataloader.
-            metrics (MetricTracker): MetricTracker object that computes
-                and aggregates the metrics. The metrics depend on the type of
-                the partition (train or inference).
-        Returns:
-            batch (dict): dict-based batch containing the data from
-                the dataloader (possibly transformed via batch transform),
-                model outputs, and losses.
+        Run one batch through the model and loss function.
         """
+
         batch = self.move_batch_to_device(batch)
-        batch = self.transform_batch(batch)  # transform batch on device -- faster
+        batch = self.transform_batch(batch)
 
         metric_funcs = self.metrics["inference"]
+
         if self.is_train:
             metric_funcs = self.metrics["train"]
             self.optimizer.zero_grad()
@@ -41,39 +32,114 @@ class Trainer(BaseTrainer):
         batch.update(all_losses)
 
         if self.is_train:
-            batch["loss"].backward()  # sum of all losses is always called loss
+            batch["loss"].backward()
             self._clip_grad_norm()
             self.optimizer.step()
+
             if self.lr_scheduler is not None:
                 self.lr_scheduler.step()
 
-        # update metrics for each loss (in case of multiple losses)
         for loss_name in self.config.writer.loss_names:
-            metrics.update(loss_name, batch[loss_name].item())
+            metrics.update(
+                loss_name,
+                batch[loss_name].item(),
+            )
 
-        for met in metric_funcs:
-            metrics.update(met.name, met(**batch))
+        for metric in metric_funcs:
+            metrics.update(
+                metric.name,
+                metric(**batch),
+            )
+
         return batch
 
-    def _log_batch(self, batch_idx, batch, mode="train"):
+    def _evaluation_epoch(
+        self,
+        epoch,
+        part,
+        dataloader,
+    ):
         """
-        Log data from batch. Calls self.writer.add_* to log data
-        to the experiment tracker.
-
-        Args:
-            batch_idx (int): index of the current batch.
-            batch (dict): dict-based batch after going through
-                the 'process_batch' function.
-            mode (str): train or inference. Defines which logging
-                rules to apply.
+        Evaluate the model and compute EER over the full partition.
         """
-        # method to log data from you batch
-        # such as audio, text or images, for example
 
-        # logging scheme might be different for different partitions
-        if mode == "train":  # the method is called only every self.log_step steps
-            # Log Stuff
+        self.is_train = False
+        self.model.eval()
+        self.evaluation_metrics.reset()
+
+        all_scores = []
+        all_labels = []
+
+        with torch.no_grad():
+            for batch_idx, batch in tqdm(
+                enumerate(dataloader),
+                desc=part,
+                total=len(dataloader),
+            ):
+                batch = self.process_batch(
+                    batch,
+                    metrics=self.evaluation_metrics,
+                )
+
+                scores = compute_bonafide_scores(
+                    batch["logits"]
+                )
+
+                all_scores.append(
+                    scores.detach().cpu()
+                )
+
+                all_labels.append(
+                    batch["labels"].detach().cpu()
+                )
+
+        scores = torch.cat(all_scores).numpy()
+        labels = torch.cat(all_labels).numpy()
+
+        bonafide_scores = scores[labels == 1]
+        spoof_scores = scores[labels == 0]
+
+        eer, _ = compute_eer(
+            bonafide_scores=bonafide_scores,
+            spoof_scores=spoof_scores,
+        )
+
+        self.writer.set_step(
+            epoch * self.epoch_len,
+            part,
+        )
+
+        self._log_scalars(
+            self.evaluation_metrics
+        )
+
+        self.writer.add_scalar(
+            "EER",
+            eer,
+        )
+
+        self._log_batch(
+            batch_idx,
+            batch,
+            part,
+        )
+
+        logs = self.evaluation_metrics.result()
+        logs["EER"] = eer
+
+        return logs
+
+    def _log_batch(
+        self,
+        batch_idx,
+        batch,
+        mode="train",
+    ):
+        """
+        Log additional batch data if needed.
+        """
+
+        if mode == "train":
             pass
         else:
-            # Log Stuff
             pass
