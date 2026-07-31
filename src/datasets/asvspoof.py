@@ -73,4 +73,4 @@ class ASVspoofDataset(BaseDataset):
         if waveform.shape[0] > 1:
             waveform = waveform.mean(dim=0, keepdim=True)
 
-        return waveform
+        return waveform.squeeze(0)

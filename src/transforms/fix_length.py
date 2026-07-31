@@ -4,7 +4,7 @@ from torch import nn
 
 class FixLength1D(nn.Module):
     """
-    Crop long waveforms and pad short waveforms with zeros.
+        Crop or pad an input along its last dimension.
     """
 
     def __init__(self, target_length):
