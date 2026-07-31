@@ -112,3 +112,8 @@ outputs/
 .vscode/
 .idea/
 __MACOSX/
+# Local training and grading artifacts
+*.pth
+grades.csv
+students_solutions/
+ASVspoof2019.LA.cm.eval.trl.txt
