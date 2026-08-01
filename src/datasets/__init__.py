@@ -1,2 +1,3 @@
-from src.datasets.example import ExampleDataset
 from src.datasets.asvspoof import ASVspoofDataset
+
+__all__ = ["ASVspoofDataset"]

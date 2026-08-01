@@ -41,6 +41,6 @@ trainer:
 
 writer:
   project_name: voice-anti-spoofing-lcnn
-  run_name: lcnn-stft-baseline
+  run_name: lcnn-stft-full-30ep
   mode: online
   log_checkpoints: false

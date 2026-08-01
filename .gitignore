@@ -117,3 +117,16 @@ __MACOSX/
 grades.csv
 students_solutions/
 ASVspoof2019.LA.cm.eval.trl.txt
+
+# Local experiment state
+state.db
+
+# Generated project files
+final_run/
+checkpoint_evaluation/
+*.pt
+*.ckpt
+/gsbabii.csv
+/checkpoint_inventory.csv
+/grades.csv
+/students_solutions/

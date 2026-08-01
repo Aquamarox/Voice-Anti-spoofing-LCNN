@@ -7,6 +7,6 @@ defaults:
 
 submission:
   checkpoint: /kaggle/working/final_run/model_best.pth
-  output_path: /kaggle/working/final_run/submission.csv
+  output_path: /kaggle/working/final_run/gsbabii.csv
   device: auto
   seed: 1
