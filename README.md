@@ -101,12 +101,11 @@ src/configs/asvspoof.yaml
 
 ```bash
 python generate_submission.py \
-  submission.checkpoint=/kaggle/working/final_run/model_best.pth \
-  submission.output_path=/kaggle/working/final_run/gsbabii.csv
-```
+  submission.checkpoint=/path/to/model_best.pth \
+  submission.output_path=outputs/gsbabii.csv
 
 Итоговый файл должен называться `gsbabii.csv`, содержать две колонки без
-заголовка и 71 237 строк с оценками для evaluation-набора.
+заголовка и строки с оценками для evaluation-набора.
 
 ## Проверка контрольных точек
 
